@@ -1,0 +1,14 @@
+<?php
+$db_name='STB_datas';
+$db_table_perfix='';
+$db_host='localhost';
+$db_username='STB';
+$db_password='';
+$db_type='mysql';
+$db_encode='utf8';
+
+$debug=false;
+
+//print_r($data_type);
+
+?>
