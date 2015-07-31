@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- 主機: localhost
--- 產生時間： 2015 年 07 月 31 日 16:53
+-- 產生時間： 2015 年 07 月 31 日 16:57
 -- 伺服器版本: 10.0.20-MariaDB-1~jessie-log
 -- PHP 版本： 5.6.9-0+deb8u1
 
@@ -30,18 +30,6 @@ CREATE TABLE IF NOT EXISTS `ChannelName` (
   `ChannelID` int(11) NOT NULL,
   `ChannelName` varchar(120) NOT NULL,
   `ChannelHolder` varchar(120) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
---
--- 資料表結構 `ChannelTable`
---
-
-CREATE TABLE IF NOT EXISTS `ChannelTable` (
-  `channel_num` int(11) NOT NULL,
-  `channel_name` varchar(50) NOT NULL,
-  `channel_uri` varchar(200) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -129,12 +117,6 @@ ALTER TABLE `ChannelName`
   ADD UNIQUE KEY `ChennelName` (`ChannelName`);
 
 --
--- 資料表索引 `ChannelTable`
---
-ALTER TABLE `ChannelTable`
-  ADD PRIMARY KEY (`channel_num`);
-
---
 -- 資料表索引 `ProgramName`
 --
 ALTER TABLE `ProgramName`
@@ -181,4 +163,3 @@ ALTER TABLE `ProgramName`
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
-
