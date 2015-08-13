@@ -13,7 +13,7 @@ function sentJSON($status,$msg,$detail) {
 function show_error($errcode,$detail) {
 	//各種錯誤
 	
-	sentJSON($errcode,$errmsg,$detail);
+	sentJSON($errcode,"錯誤發生",$detail);
 }
 
 function sentResault($res) {
@@ -25,67 +25,48 @@ function sentResault($res) {
 			sentJSON(1,"更新成功",null);
 			break;
 		default:
-			sentJSON(-1,"失敗",$res);
+			sentJSON($res,"失敗","請查閱手冊");
 			break;
 	}
 	
 }
 
-function getChannelStatus($data_field,$con) {
-
-	$ChannelID=$con->lookupIDs("Channel",$data_field["Channel"]);
+function getStatus($type,$data_field,$con) {
+	if ( $type == "Channel" ) 
+		$Target="Channel";
+	else if ( $type == "Program" ) 
+		$Target="Program";
 	
-	$res=$con->statics("Channel",
-		$ChannelID,$data_field["Status"],"Year",false);
-	echo "res(Year)=".$res."\n";
+	$TargetID=$con->lookupIDs("$Target",$data_field[$Target]);
 	
 	$return_data=array(
-		ChannelName => $data_field["Channel"],
-		RecentlyView => 10000,
-		RecentlyLike =>  5000,
-		RecentlyHate =>  3000,
-		WeeklyView => 100000,
-		WeeklyLike =>  60000,
-		WeeklyHate =>  30000,
-		MonthView => 350000,
-		MonthLike =>  18000,
-		MonthHate =>  91000,
-		YearView => 350000,
-		YearLike =>  18000,
-		YearHate =>  91000
+		$Target."Name" => $data_field["$Target"],
+		"RecentlyView" => $con->statics("$Target",
+			$TargetID,"none","Day",false),
+		"RecentlyLike" => $con->statics("$Target",
+			$TargetID,1,"Day",false),
+		"RecentlyHate" => $con->statics("$Target",
+			$TargetID,-1,"Day",false),
+		"WeeklyView" => $con->statics("$Target",
+			$TargetID,"none","Week",false),
+		"WeeklyLike" => $con->statics("$Target",
+			$TargetID,1,"Week",false),
+		"WeeklyHate" => $con->statics("$Target",
+			$TargetID,-1,"Week",false),
+		"MonthView" => $con->statics("$Target",
+			$TargetID,"none","Month",false),
+		"MonthLike" => $con->statics("$Target",
+			$TargetID,1,"Month",false),
+		"MonthHate" => $con->statics("$Target",
+			$TargetID,-1,"Month",false),
+		"YearView" => $con->statics("$Target",
+			$TargetID,"none","Year",false),
+		"YearLike" => $con->statics("$Target",
+			$TargetID,1,"Year",false),
+		"YearHate" => $con->statics("$Target",
+			$TargetID,-1,"Year",false)
 	);
 	sentJSON(1,"資料取得成功",$return_data);
-}
-
-function getProgramStatus($data_field) {
-	$return_data=array(
-		ProgramName => "假的節目名稱",
-		RecentlyView => 10000,
-		RecentlyLike =>  5000,
-		RecentlyHate =>  3000,
-		WeeklyView => 100000,
-		WeeklyLike =>  60000,
-		WeeklyHate =>  30000,
-		MonthView => 350000,
-		MonthLike =>  18000,
-		MonthHate =>  91000,
-		YearView => 350000,
-		YearLike =>  18000,
-		YearHate =>  91000
-	);
-	sentJSON(1,"資料取得成功",$return_data);
-}
-
-function getChannelComment($data_field) {
-	
-	
-	
-}
-
-function getProgramComment($data_field) {
-	
-	
-	
 }
 
 //連線至資料庫，並開始準備查詢
@@ -104,7 +85,7 @@ if ( $con->status() ) {
 		$dataForm=$_POST;
 	}
 	else { 
-		show_error(-50,"請輸入UID");
+		show_error(-1,"請輸入UID");
 	}
 	
 	if (isset($dataForm)) {
@@ -118,33 +99,16 @@ if ( $con->status() ) {
 					$dataForm["UID"],$ChannelID,$ProgramID,$dataForm["Time"],$dataForm["Status"]);
 				sentResault($res);
 				break;
-			case "/API/SENTCOMMENT":
-			case "/API/SENTCOMMENT/":
-				$ChannelID=$con->lookupIDs("Channel",$dataForm["Channel"]);
-				$ProgramID=$con->lookupIDs("Program",$dataForm["Program"]);
-				
-				$res=$con->sent("Comment",
-					$dataForm["UID"],$ChannelID,$ProgramID,$dataForm["Time"],$dataForm["Comment"]);
-				sentResault($res);
-				break;
 			case "/API/GETCHANNELSTATUS":
 			case "/API/GETCHANNELSTATUS/":
-				getChannelStatus($dataForm,$con);
+				getStatus("Channel",$dataForm,$con);
 				break;
 			case "/API/GETPROGRAMSTATUS":
 			case "/API/GETPROGRAMSTATUS/":
-				getProgramStatus($dataForm);
-				break;
-			case "/API/GETCHANNELCOMMENT":
-			case "/API/GETCHANNELCOMMENT/":
-				getChannelComment($dataForm);
-				break;
-			case "/API/GETPROGRAMCOMMENT":
-			case "/API/GETPROGRAMCOMMENT/":
-				getProgramComment($dataForm);
+				getStatus("Program",$dataForm,$con);
 				break;
 			default:
-				show_error(-52,"URI=".$_SERVER["REQUEST_URI"]."\nAPI=".$API);
+				show_error(-7,"URI=".$_SERVER["REQUEST_URI"]."\nAPI=".$API);
 				break;
 		}
 	}

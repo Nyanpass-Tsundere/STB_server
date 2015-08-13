@@ -77,50 +77,70 @@ class dbConnections{
 			$FIELD="Status";
 			$FIELD_TYPE="INT";
 		}
+		/*
 		else if ( $TYPE == "Comment" ) {
 			$TABLE="RealtimeComment";
 			$FIELD="Comment";
 			$FIELD_TYPE="STR";
+		}*/else {
+			return -15;
 		}
-	
-		$query=$this->con->prepare("INSERT INTO `$TABLE`
-			       (`UserID`, `ProgramlID`, `programstarttime`, `ChannelID`, `$FIELD`) 
-			VALUES (:UID, :PROGRAM, :TIME, :CHANNEL, :SFILED)");
-		$query->bindParam(':UID',$UID,PDO::PARAM_INT);
-		$query->bindParam(':PROGRAM',$PROGRAM,PDO::PARAM_INT);
-		$query->bindParam(':CHANNEL',$CHANNEL,PDO::PARAM_INT);
-		if ($FIELD_TYPE=="INT") {
-			$query->bindParam(':SFILED',$SFIELD,PDO::PARAM_INT);
-		}
-		else if ($FIELD_TYPE=="STR") {
-			$query->bindParam(':SFILED',$SFIELD,PDO::PARAM_STR);
-		}
-		$query->bindParam(':TIME',$TIME,PDO::PARAM_LOB);
 		
-		if ( $query->execute() ) {
-			return 0;
-		}
-		else {
-			$error=$query->errorInfo();
+		if ( $CHANNEL != null and $PROGRAM != null and $TIME !=null ) {
+		
+			$query=$this->con->prepare("INSERT INTO `$TABLE`
+				       (`UserID`, `ProgramlID`, `programstarttime`, `ChannelID`, `$FIELD`) 
+				VALUES (:UID, :PROGRAM, :TIME, :CHANNEL, :SFILED)");
+			$query->bindParam(':UID',$UID,PDO::PARAM_INT);
+			$query->bindParam(':PROGRAM',$PROGRAM,PDO::PARAM_INT);
+			$query->bindParam(':CHANNEL',$CHANNEL,PDO::PARAM_INT);
+			$query->bindParam(':SFILED',$SFIELD,PDO::PARAM_INT);
+			$query->bindParam(':TIME',$TIME,PDO::PARAM_LOB);
 			
-			//處裡已經評價過的狀況
-			if ( $error[0] == 23000 ) {
-				$update=$this->con->prepare("UPDATE `RealtimeViews` SET `Status` = :STATUS 
-					WHERE `RealtimeViews`.`UserID` = :UID
-					AND `RealtimeViews`.`ProgramlID` = :PROGRAM
-					AND `RealtimeViews`.`programstarttime` = :TIME; ");
-				$update->bindParam(':UID',$UID,PDO::PARAM_INT);
-				$update->bindParam(':PROGRAM',$PROGRAM,PDO::PARAM_INT);
-				$update->bindParam(':CHANNEL',$CHANNEL,PDO::PARAM_INT);
-				$update->bindParam(':STATUS',$STATUS,PDO::PARAM_INT);
-				$update->bindParam(':TIME',$TIME,PDO::PARAM_LOB);
-				
-				return 1;
+			if ( $query->execute() ) {
+				return 0;
 			}
 			else {
-				return $error;
+				$error=$query->errorInfo();
+				
+				//處裡已經評價過的狀況
+				if ( $error[0] == 23000 ) {
+					switch ($SFIELD){
+					case 0:
+						return -21;
+						break;
+					case 100:
+						$SFIELD=0;
+					default:
+						$update=$this->con->prepare("UPDATE `$TABLE` SET `$FIELD` = :STATUS 
+							WHERE `RealtimeViews`.`UserID` = :UID
+							AND `RealtimeViews`.`ProgramlID` = :PROGRAM
+							AND `RealtimeViews`.`programstarttime` = :TIME; ");
+						$update->bindParam(':UID',$UID,PDO::PARAM_INT);
+						$update->bindParam(':PROGRAM',$PROGRAM,PDO::PARAM_INT);
+						#$update->bindParam(':CHANNEL',$CHANNEL,PDO::PARAM_INT);
+						$update->bindParam(':STATUS',$SFIELD,PDO::PARAM_INT);
+						$update->bindParam(':TIME',$TIME,PDO::PARAM_LOB);
+						
+						if ( $update->execute() ) {
+							return 1;
+							break;
+						}
+						else {
+							$error=$update->errorInfo();
+							return $error;
+						}
+						
+					}
+				}
+				else {
+					return $error;
+				}
+				
 			}
-			
+		
+		} else {
+			return -3;
 		}
 	}
 	
@@ -167,9 +187,10 @@ class dbConnections{
 			$target_field="ChannelID";
 		}
 		
-		if ( $status != "none" ) {
+		if ( $status != "none" ) 
 			$target_status="AND `Status` = :STATUS";
-		}
+		else 
+			$target_status="";
 		
 		$COND_DUP="";
 		if ( $noDup === true ) $COND_DUP="DISTINCT";
@@ -178,13 +199,13 @@ class dbConnections{
 			$E_TIME=$this->formatTime($this->oldTime(0,"NOW"),"second");
 			$S_TIME=$this->formatTime($this->oldTime(1,"day"),"second");
 		} else if ( $seq == "Week" ) {
-			$E_TIME=$this->formatTime($this->oldTime(),"hour");
+			$E_TIME=$this->formatTime($this->oldTime(0,"NOW"),"hour");
 			$S_TIME=$this->formatTime($this->oldTime(1,"week"),"hour");
 		} else if ( $seq == "Month" ) {
-			$E_TIME=$this->formatTime($this->oldTime(),"day");
+			$E_TIME=$this->formatTime($this->oldTime(0,"NOW"),"day");
 			$S_TIME=$this->formatTime($this->oldTime(1,"month"),"day");
 		} else if ( $seq == "Year" ) {
-			$E_TIME=$this->formatTime($this->oldTime(),"month");
+			$E_TIME=$this->formatTime($this->oldTime(0,"NOW"),"month");
 			$S_TIME=$this->formatTime($this->oldTime(1,"year"),"month");
 		}
 		#echo "S_TIME=$S_TIME\n";
