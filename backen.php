@@ -121,11 +121,13 @@ if ( $con->status() ) {
 			break;
 		case "/API/GETMYPROGRAMS":
 		case "/API/GETMYPROGRAMS/":
-			getMyPrograms($con,$dataForm["UID"],$dataForm["Status"],null,30,0);
+			getMyPrograms($con,$dataForm["UID"],$dataForm["Status"],null,
+				$dataForm["Amount"],$dataForm["Skips"]);
 			break;
 		case "/API/GETMYFAVORITE":
 		case "/API/GETMYFAVORITE/":
-			getmyPrograms($con,$dataForm["UID"],1,true,30,0);
+			getmyPrograms($con,$dataForm["UID"],1,true,
+				$dataForm["Amount"],$dataForm["Skips"]);
 			break;
 		
 		default:

@@ -3,7 +3,7 @@
 -- http://www.phpmyadmin.net
 --
 -- 主機: localhost
--- 產生時間： 2015 年 07 月 31 日 16:57
+-- 產生時間： 2015 年 08 月 14 日 15:19
 -- 伺服器版本: 10.0.20-MariaDB-1~jessie-log
 -- PHP 版本： 5.6.9-0+deb8u1
 
@@ -32,6 +32,10 @@ CREATE TABLE IF NOT EXISTS `ChannelName` (
   `ChannelHolder` varchar(120) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
+--
+-- 表的關聯 `ChannelName`:
+--
+
 -- --------------------------------------------------------
 
 --
@@ -44,20 +48,9 @@ CREATE TABLE IF NOT EXISTS `ProgramName` (
   `ProgramHolder` varchar(120) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
--- --------------------------------------------------------
-
 --
--- 資料表結構 `RealtimeComment`
+-- 表的關聯 `ProgramName`:
 --
-
-CREATE TABLE IF NOT EXISTS `RealtimeComment` (
-  `UserID` int(11) NOT NULL,
-  `ProgramlID` int(11) NOT NULL,
-  `programstarttime` datetime NOT NULL,
-  `ChannelID` int(11) NOT NULL,
-  `CommentTime` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
-  `Comment` text NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
 
@@ -70,40 +63,17 @@ CREATE TABLE IF NOT EXISTS `RealtimeViews` (
   `ProgramlID` int(11) NOT NULL,
   `programstarttime` datetime NOT NULL,
   `ChannelID` int(11) NOT NULL,
-  `Status` tinyint(4) NOT NULL
+  `Status` tinyint(4) NOT NULL,
+  `Favorite` tinyint(1) NOT NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
--- --------------------------------------------------------
-
 --
--- 資料表結構 `StaticsChannel`
+-- 表的關聯 `RealtimeViews`:
+--   `ProgramlID`
+--       `ProgramName` -> `ProgramID`
+--   `ChannelID`
+--       `ChannelName` -> `ChannelID`
 --
-
-CREATE TABLE IF NOT EXISTS `StaticsChannel` (
-  `ChannelID` int(11) NOT NULL,
-  `week_view` int(11) NOT NULL,
-  `week_like` int(11) NOT NULL,
-  `month_view` int(11) NOT NULL,
-  `month_like` int(11) NOT NULL,
-  `year_view` int(11) NOT NULL,
-  `year_like` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
-
--- --------------------------------------------------------
-
---
--- 資料表結構 `StaticsProgram`
---
-
-CREATE TABLE IF NOT EXISTS `StaticsProgram` (
-  `ProgramID` int(11) NOT NULL,
-  `week_view` int(11) NOT NULL,
-  `week_like` int(11) NOT NULL,
-  `month_view` int(11) NOT NULL,
-  `month_like` int(11) NOT NULL,
-  `year_view` int(11) NOT NULL,
-  `year_like` int(11) NOT NULL
-) ENGINE=InnoDB DEFAULT CHARSET=utf8;
 
 --
 -- 已匯出資料表的索引
@@ -123,28 +93,13 @@ ALTER TABLE `ProgramName`
   ADD PRIMARY KEY (`ProgramID`);
 
 --
--- 資料表索引 `RealtimeComment`
---
-ALTER TABLE `RealtimeComment`
-  ADD PRIMARY KEY (`UserID`,`ProgramlID`,`programstarttime`);
-
---
 -- 資料表索引 `RealtimeViews`
 --
 ALTER TABLE `RealtimeViews`
-  ADD PRIMARY KEY (`UserID`,`ProgramlID`,`programstarttime`);
-
---
--- 資料表索引 `StaticsChannel`
---
-ALTER TABLE `StaticsChannel`
-  ADD PRIMARY KEY (`ChannelID`);
-
---
--- 資料表索引 `StaticsProgram`
---
-ALTER TABLE `StaticsProgram`
-  ADD PRIMARY KEY (`ProgramID`);
+  ADD PRIMARY KEY (`UserID`,`ProgramlID`,`programstarttime`),
+  ADD KEY `ProgramlID` (`ProgramlID`),
+  ADD KEY `ChannelID` (`ChannelID`),
+  ADD KEY `ChannelID_2` (`ChannelID`);
 
 --
 -- 在匯出的資料表使用 AUTO_INCREMENT
@@ -160,6 +115,18 @@ ALTER TABLE `ChannelName`
 --
 ALTER TABLE `ProgramName`
   MODIFY `ProgramID` int(11) NOT NULL AUTO_INCREMENT;
+--
+-- 已匯出資料表的限制(Constraint)
+--
+
+--
+-- 資料表的 Constraints `RealtimeViews`
+--
+ALTER TABLE `RealtimeViews`
+  ADD CONSTRAINT `RealtimeViews_ibfk_1` FOREIGN KEY (`ProgramlID`) REFERENCES `ProgramName` (`ProgramID`) ON DELETE NO ACTION ON UPDATE NO ACTION,
+  ADD CONSTRAINT `RealtimeViews_ibfk_2` FOREIGN KEY (`ChannelID`) REFERENCES `ChannelName` (`ChannelID`) ON DELETE NO ACTION ON UPDATE NO ACTION;
+
 /*!40101 SET CHARACTER_SET_CLIENT=@OLD_CHARACTER_SET_CLIENT */;
 /*!40101 SET CHARACTER_SET_RESULTS=@OLD_CHARACTER_SET_RESULTS */;
 /*!40101 SET COLLATION_CONNECTION=@OLD_COLLATION_CONNECTION */;
+

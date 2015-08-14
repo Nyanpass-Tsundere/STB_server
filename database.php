@@ -264,17 +264,20 @@ class dbConnections{
 		else 
 			$field='AND `Status` = :status';
 		
+		$limitCond="LIMIT ".(int)$start.", ".(int)$limit;
+		//$limit="";
+		
 		$query=$this->con->prepare("SELECT `ChannelID` , `ProgramlID` , `programstarttime` 
 						FROM `RealtimeViews`
 						WHERE `UserID` = :UID $field
 						ORDER by `programstarttime` DESC
-						LIMIT :limit , :start");
+						$limitCond");
+						//LIMIT :limit , :start");
 		$query->bindParam(':UID',$UID,PDO::PARAM_INT);
 		if ( $status!="null" )
 			$query->bindParam(':status',$status,PDO::PARAM_INT);
-		$query->bindParam(':start',$limit,PDO::PARAM_INT);
-		$query->bindParam(':limit',$start,PDO::PARAM_INT);
-		
+		//$query->bindParam(':start',$start,PDO::PARAM_INT);
+		//$query->bindParam(':limit',$limit,PDO::PARAM_INT);
 		
 		if ( $query->execute() ) {
 			$result = $query->fetchAll();
