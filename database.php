@@ -71,6 +71,31 @@ class dbConnections{
 		return $result["0"]["$FIELD_R"];
 	}
 	
+	function lookupNames($TYPE,$NAME) {
+		switch ($TYPE) {
+			case "Channel":
+				$FIELD_L="ChannelID";
+				$FIELD_R="ChannelName";
+				$TABLE="ChannelName";
+				break;
+			case "Program":
+				$FIELD_L="ProgramID";
+				$FIELD_R="ProgramName";
+				$TABLE="ProgramName";
+				break;
+		}
+		$query=$this->con->prepare("SELECT `$FIELD_R` 
+				FROM `$TABLE`
+				WHERE $TABLE.$FIELD_L = :NAME");
+		$query->bindParam(':NAME',$NAME,PDO::PARAM_INT);
+		$query->execute();
+		$result = $query->fetchAll();
+		if ( !array_key_exists("0",$result) ) {
+			return 0;
+		}
+		return $result["0"]["$FIELD_R"];
+	}
+	
 	function sent($TYPE,$UID,$CHANNEL,$PROGRAM,$TIME,$SFIELD) {
 		if ( $TYPE == "Status") {
 			$TABLE="RealtimeViews";
@@ -229,6 +254,48 @@ class dbConnections{
 		#print_r($result);
 		#print("\n");
 		return $result["0"]["COUNTING"];
+	}
+	
+	function myPrograms($UID,$status,$favorite,$limit,$start) {
+		if ( $status=="null" )
+			$field='';
+		else if ( $favorite === true ) 
+			$field='AND `Favorite` = :status';
+		else 
+			$field='AND `Status` = :status';
+		
+		$query=$this->con->prepare("SELECT `ChannelID` , `ProgramlID` , `programstarttime` FROM `RealtimeViews`
+									WHERE `UserID` = :UID $field
+									ORDER by `programstarttime` DESC
+									LIMIT :limit , :start");
+		$query->bindParam(':UID',$UID,PDO::PARAM_INT);
+		if ( $status!="null" )
+			$query->bindParam(':status',$status,PDO::PARAM_INT);
+		$query->bindParam(':start',$limit,PDO::PARAM_INT);
+		$query->bindParam(':limit',$start,PDO::PARAM_INT);
+		
+		
+		if ( $query->execute() ) {
+			$result = $query->fetchAll();
+			$count=0;
+			$res=array();
+			foreach( $result as $row ) {
+				$count++;
+				array_push($res, array(
+					"Channel"=>$this->lookupNames("Channel",$row["ChannelID"]),
+					"Time"=>$row["programstarttime"],
+					"Program"=>$this->lookupNames("Program",$row["ProgramlID"])
+				));
+				//print_r($row);
+			}
+			#echo "count=".$count;
+			//print_r($result);
+			return $res;
+		}
+		else {
+			$error=$query->errorInfo();
+			return $error;
+		}
 	}
 }
 

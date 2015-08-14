@@ -31,6 +31,7 @@ function sentResault($res) {
 	
 }
 
+//not in use
 function getStatus($type,$data_field,$con) {
 	if ( $type == "Channel" ) 
 		$Target="Channel";
@@ -90,26 +91,35 @@ if ( $con->status() ) {
 	
 	if (isset($dataForm)) {
 		switch( $API ) {
-			case "/API/SENTSTATUS":
-			case "/API/SENTSTATUS/":
-				$ChannelID=$con->lookupIDs("Channel",$dataForm["Channel"]);
-				$ProgramID=$con->lookupIDs("Program",$dataForm["Program"]);
-				
-				$res=$con->sent("Status",
-					$dataForm["UID"],$ChannelID,$ProgramID,$dataForm["Time"],$dataForm["Status"]);
-				sentResault($res);
-				break;
-			case "/API/GETCHANNELSTATUS":
-			case "/API/GETCHANNELSTATUS/":
-				getStatus("Channel",$dataForm,$con);
-				break;
-			case "/API/GETPROGRAMSTATUS":
-			case "/API/GETPROGRAMSTATUS/":
-				getStatus("Program",$dataForm,$con);
-				break;
-			default:
-				show_error(-7,"URI=".$_SERVER["REQUEST_URI"]."\nAPI=".$API);
-				break;
+		case "/API/SENTSTATUS":
+		case "/API/SENTSTATUS/":
+			$ChannelID=$con->lookupIDs("Channel",$dataForm["Channel"]);
+			$ProgramID=$con->lookupIDs("Program",$dataForm["Program"]);
+			
+			$res=$con->sent("Status",
+				$dataForm["UID"],$ChannelID,$ProgramID,$dataForm["Time"],$dataForm["Status"]);
+			sentResault($res);
+			break;
+		case "/API/GETCHANNELSTATUS":
+		case "/API/GETCHANNELSTATUS/":
+			getStatus("Channel",$dataForm,$con);
+			break;
+		case "/API/GETPROGRAMSTATUS":
+		case "/API/GETPROGRAMSTATUS/":
+			getStatus("Program",$dataForm,$con);
+			break;
+		case "/API/GETMYPROGRAMS":
+		case "/API/GETMYPROGRAMS/":
+			$con->myPrograms($dataForm["UID"],$dataForm["Status"],null,30,0);
+			break;
+		case "/API/GETMYFAVORITE":
+		case "/API/GETMYFAVORITE/":
+			$con->myPrograms($dataForm["UID"],1,true,30,0);
+			break;
+		
+		default:
+			show_error(-7,"URI=".$_SERVER["REQUEST_URI"]."\nAPI=".$API);
+			break;
 		}
 	}
 	
