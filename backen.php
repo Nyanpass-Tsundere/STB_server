@@ -69,6 +69,17 @@ function getStatus($type,$data_field,$con) {
 	);
 	sentJSON(1,"資料取得成功",$return_data);
 }
+function getMyPrograms($con,$UID,$Status,$Fav,$Limit,$Start) {
+	$resArray=$con->myPrograms($UID,$Status,$Fav,$Limit,$Start);
+	
+	if ( $resArray["Status"] < 0 ) {
+		show_error($resArray["Status"],$resArray["Content"]);	
+	} else if ( $resArray["Status"] == 0 ) {
+		sentJSON(0,"無資料",null);
+	} else {
+		sentJSON($resArray["Status"],"成功取得清單",$resArray["Content"]);
+	}
+}
 
 //連線至資料庫，並開始準備查詢
 $con=new dbConnections();
@@ -110,11 +121,11 @@ if ( $con->status() ) {
 			break;
 		case "/API/GETMYPROGRAMS":
 		case "/API/GETMYPROGRAMS/":
-			$con->myPrograms($dataForm["UID"],$dataForm["Status"],null,30,0);
+			getMyPrograms($con,$dataForm["UID"],$dataForm["Status"],null,30,0);
 			break;
 		case "/API/GETMYFAVORITE":
 		case "/API/GETMYFAVORITE/":
-			$con->myPrograms($dataForm["UID"],1,true,30,0);
+			getmyPrograms($con,$dataForm["UID"],1,true,30,0);
 			break;
 		
 		default:

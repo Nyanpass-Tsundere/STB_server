@@ -264,10 +264,11 @@ class dbConnections{
 		else 
 			$field='AND `Status` = :status';
 		
-		$query=$this->con->prepare("SELECT `ChannelID` , `ProgramlID` , `programstarttime` FROM `RealtimeViews`
-									WHERE `UserID` = :UID $field
-									ORDER by `programstarttime` DESC
-									LIMIT :limit , :start");
+		$query=$this->con->prepare("SELECT `ChannelID` , `ProgramlID` , `programstarttime` 
+						FROM `RealtimeViews`
+						WHERE `UserID` = :UID $field
+						ORDER by `programstarttime` DESC
+						LIMIT :limit , :start");
 		$query->bindParam(':UID',$UID,PDO::PARAM_INT);
 		if ( $status!="null" )
 			$query->bindParam(':status',$status,PDO::PARAM_INT);
@@ -290,11 +291,12 @@ class dbConnections{
 			}
 			#echo "count=".$count;
 			//print_r($result);
-			return $res;
+			//print_r($res);
+			return array("Status"=>$count,"Content"=>$res);
 		}
 		else {
 			$error=$query->errorInfo();
-			return $error;
+			return array("Status"=>-15,"Content"=>$error);
 		}
 	}
 }
