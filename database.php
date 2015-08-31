@@ -264,8 +264,10 @@ class dbConnections{
 		else 
 			$field='AND `Status` = :status';
 		
-		$limitCond="LIMIT ".(int)$start.", ".(int)$limit;
-		//$limit="";
+		if ( $start > 0 ) 
+			$limitCond="LIMIT ".(int)$start.", ".(int)$limit;
+		else
+			$limitCond="";
 		
 		$query=$this->con->prepare("SELECT `ChannelID` , `ProgramlID` , `programstarttime` 
 						FROM `RealtimeViews`
