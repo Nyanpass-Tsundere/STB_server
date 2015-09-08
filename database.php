@@ -248,7 +248,7 @@ class dbConnections{
 		#print("\n");
 		return $result["0"]["COUNTING"];
 	}
-	
+
 	function myPrograms($UID,$status,$favorite,$limit,$start) {
 		if ( $status == "null" ) {
 			$field='';
@@ -266,7 +266,6 @@ class dbConnections{
 			$limitCond="LIMIT ".(int)$start.", ".(int)$limit;
 		else 
 			$limitCond="";
-		
 		
 		$query=$this->con->prepare("SELECT `ChannelID` , `ProgramlID` , `programstarttime` $extraField
 						FROM `RealtimeViews`
@@ -299,6 +298,89 @@ class dbConnections{
 						"Program"=>$this->lookupNames("Program",$row["ProgramlID"]),
 						"Status"=>$row["Status"],
 						"Favorite"=>$row["Favorite"]
+					));
+				}
+				//print_r($row);
+			}
+			#echo "count=".$count;
+			//print_r($result);
+			//print_r($res);
+			return array("Status"=>$count,"Content"=>$res);
+		}
+		else {
+			$error=$query->errorInfo();
+			return array("Status"=>-15,"Content"=>$error);
+		}
+	}
+	
+	function getRanking($type,$status,$range,$limit,$start) {
+		if ( $type == "Channel" ) {
+			$field="";
+		}
+		else if ( $type == "Program" ) {
+			$field=", `ProgramlID` ";
+			//$field=", `ProgramlID` , `programstarttime`";
+		}
+		
+		if ( $range == "Year" ) {
+			$E_TIME=$this->formatTime($this->oldTime(0,"NOW"),"month");
+			$S_TIME=$this->formatTime($this->oldTime(1,"year"),"month");
+			$cond="Where `programstarttime` BETWEEN \"$S_TIME\" AND \"$E_TIME\" ";
+		} else if ( $range == "Month" ) {
+			$E_TIME=$this->formatTime($this->oldTime(0,"NOW"),"day");
+			$S_TIME=$this->formatTime($this->oldTime(1,"month"),"day");
+			$cond="Where `programstarttime` BETWEEN \"$S_TIME\" AND \"$E_TIME\" ";
+		} else if ( $range == "Week" ) {
+			$S_TIME=$this->formatTime($this->oldTime(1,"week"),"hour");
+			$E_TIME=$this->formatTime($this->oldTime(0,"NOW"),"hour");
+			$cond="Where `programstarttime` BETWEEN \"$S_TIME\" AND \"$E_TIME\" ";
+		} else if ( $range == "Day" ) {
+			$E_TIME=$this->formatTime($this->oldTime(0,"NOW"),"second");
+			$S_TIME=$this->formatTime($this->oldTime(1,"day"),"second");
+			$cond="Where `programstarttime` BETWEEN \"$S_TIME\" AND \"$E_TIME\" ";
+		} else {
+			$cond="Where ";
+		}
+		
+		if ( $status == 0 AND $cond == "Where " ) 
+			$cond="";
+		else if (  $status == 0 )
+			$cond.="";
+		else
+			$cond.=" AND `Status` = :STATUS";
+		
+		if ( $limit > 0 ) 
+			$limitCond="LIMIT ".(int)$start.", ".(int)$limit;
+		else 
+			$limitCond="";
+		
+		$query=$this->con->prepare("SELECT `ChannelID` $field , count(UserID) as Counting
+						FROM `RealtimeViews`
+						$cond
+						GROUP BY `ChannelID` $field
+						ORDER BY `Counting` DESC
+						$limitCond");
+		
+		if ( $status != 0 )
+			$query->bindParam(':STATUS',$status,PDO::PARAM_INT);
+		
+		if ( $query->execute() ) {
+			$result = $query->fetchAll();
+			$count=0;
+			$res=array();
+			foreach( $result as $row ) {
+				$count++;
+				if ( $type == "Channel" ) {
+					array_push($res, array(
+						"Channel"=>$this->lookupNames("Channel",$row["ChannelID"]),
+						"Counting"=>$row["Counting"]
+					));
+				} else if ( $type == "Program" ) {
+					array_push($res, array(
+						"Channel"=>$this->lookupNames("Channel",$row["ChannelID"]),
+						//"Time"=>$row["programstarttime"],
+						"Program"=>$this->lookupNames("Program",$row["ProgramlID"]),
+						"Counting"=>$row["Counting"]
 					));
 				}
 				//print_r($row);

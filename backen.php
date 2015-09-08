@@ -81,6 +81,18 @@ function getMyPrograms($con,$UID,$Status,$Fav,$Limit,$Start) {
 	}
 }
 
+function getRanking($con,$type,$status,$range,$limit,$start) {
+	$resArray=$con->getRanking($type,$status,$range,$limit,$start);
+	
+	if ( $resArray["Status"] < 0 ) {
+		show_error($resArray["Status"],$resArray["Content"]);	
+	} else if ( $resArray["Status"] == 0 ) {
+		sentJSON(0,"無資料",null);
+	} else {
+		sentJSON($resArray["Status"],"成功取得清單",$resArray["Content"]);
+	}
+}
+
 //連線至資料庫，並開始準備查詢
 $con=new dbConnections();
 
@@ -140,9 +152,13 @@ if ( $con->status() ) {
 			break;
 		case "/API/GETCHANNELRANK":
 		case "/API/GETCHANNELRANK/":
+			getRanking($con,"Channel",$dataForm["Status"],$dataForm["Range"],
+				$dataForm["Amount"],$dataForm["Skips"]);
 			break;
 		case "/API/GETPROGRAMRANK":
 		case "/API/GETPROGRAMRANK/":
+			getRanking($con,"Program",$dataForm["Status"],$dataForm["Range"],
+				$dataForm["Amount"],$dataForm["Skips"]);
 			break;
 		default:
 			show_error(-7,"URI=".$_SERVER["REQUEST_URI"]."\nAPI=".$API);
