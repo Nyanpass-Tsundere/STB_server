@@ -111,6 +111,15 @@ if ( $con->status() ) {
 				$dataForm["UID"],$ChannelID,$ProgramID,$dataForm["Time"],$dataForm["Status"]);
 			sentResault($res);
 			break;
+		case "/API/SENTFAVORITE":
+		case "/API/SENTFAVORITE/":
+			$ChannelID=$con->lookupIDs("Channel",$dataForm["Channel"]);
+			$ProgramID=$con->lookupIDs("Program",$dataForm["Program"]);
+			
+			$res=$con->sent("Favorite",
+				$dataForm["UID"],$ChannelID,$ProgramID,$dataForm["Time"],$dataForm["Status"]);
+			sentResault($res);
+			break;
 		case "/API/GETCHANNELSTATUS":
 		case "/API/GETCHANNELSTATUS/":
 			getStatus("Channel",$dataForm,$con);
@@ -126,10 +135,15 @@ if ( $con->status() ) {
 			break;
 		case "/API/GETMYFAVORITE":
 		case "/API/GETMYFAVORITE/":
-			getmyPrograms($con,$dataForm["UID"],1,true,
+			getMyPrograms($con,$dataForm["UID"],1,true,
 				$dataForm["Amount"],$dataForm["Skips"]);
 			break;
-		
+		case "/API/GETCHANNELRANK":
+		case "/API/GETCHANNELRANK/":
+			break;
+		case "/API/GETPROGRAMRANK":
+		case "/API/GETPROGRAMRANK/":
+			break;
 		default:
 			show_error(-7,"URI=".$_SERVER["REQUEST_URI"]."\nAPI=".$API);
 			break;

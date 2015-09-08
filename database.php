@@ -97,29 +97,23 @@ class dbConnections{
 	}
 	
 	function sent($TYPE,$UID,$CHANNEL,$PROGRAM,$TIME,$SFIELD) {
-		if ( $TYPE == "Status") {
-			$TABLE="RealtimeViews";
-			$FIELD="Status";
-			$FIELD_TYPE="INT";
-		}
-		/*
-		else if ( $TYPE == "Comment" ) {
-			$TABLE="RealtimeComment";
-			$FIELD="Comment";
-			$FIELD_TYPE="STR";
-		}*/else {
+		if ( $TYPE == "Status" ) {
+			$UPDATE_FILED="Status";
+		}else if ( $TYPE == "Favorite" ) {
+			$UPDATE_FILED="Favorite";
+		}else {
 			return -15;
 		}
 		
 		if ( $CHANNEL != null and $PROGRAM != null and $TIME !=null ) {
 		
-			$query=$this->con->prepare("INSERT INTO `$TABLE`
-				       (`UserID`, `ProgramlID`, `programstarttime`, `ChannelID`, `$FIELD`) 
-				VALUES (:UID, :PROGRAM, :TIME, :CHANNEL, :SFILED)");
+			$query=$this->con->prepare("INSERT INTO `RealtimeViews`
+				       (`UserID`, `ProgramlID`, `programstarttime`, `ChannelID`, `$UPDATE_FILED`) 
+				VALUES (:UID, :PROGRAM, :TIME, :CHANNEL, :STATUS)");
 			$query->bindParam(':UID',$UID,PDO::PARAM_INT);
 			$query->bindParam(':PROGRAM',$PROGRAM,PDO::PARAM_INT);
 			$query->bindParam(':CHANNEL',$CHANNEL,PDO::PARAM_INT);
-			$query->bindParam(':SFILED',$SFIELD,PDO::PARAM_INT);
+			$query->bindParam(':STATUS',$SFIELD,PDO::PARAM_INT);
 			$query->bindParam(':TIME',$TIME,PDO::PARAM_LOB);
 			
 			if ( $query->execute() ) {
@@ -137,13 +131,12 @@ class dbConnections{
 					case 100:
 						$SFIELD=0;
 					default:
-						$update=$this->con->prepare("UPDATE `$TABLE` SET `$FIELD` = :STATUS 
+						$update=$this->con->prepare("UPDATE `RealtimeViews` SET `$UPDATE_FILED` = :STATUS 
 							WHERE `RealtimeViews`.`UserID` = :UID
 							AND `RealtimeViews`.`ProgramlID` = :PROGRAM
 							AND `RealtimeViews`.`programstarttime` = :TIME; ");
 						$update->bindParam(':UID',$UID,PDO::PARAM_INT);
 						$update->bindParam(':PROGRAM',$PROGRAM,PDO::PARAM_INT);
-						#$update->bindParam(':CHANNEL',$CHANNEL,PDO::PARAM_INT);
 						$update->bindParam(':STATUS',$SFIELD,PDO::PARAM_INT);
 						$update->bindParam(':TIME',$TIME,PDO::PARAM_LOB);
 						
@@ -257,19 +250,25 @@ class dbConnections{
 	}
 	
 	function myPrograms($UID,$status,$favorite,$limit,$start) {
-		if ( $status=="null" )
+		if ( $status == "null" ) {
 			$field='';
-		else if ( $favorite === true ) 
+			$extraField=' , `Status` , `Favorite`';
+		}
+		else if ( $favorite === true ) {
 			$field='AND `Favorite` = :status';
-		else 
+			$extraField='';
+		}
+		else {
 			$field='AND `Status` = :status';
-		
-		if ( $start > 0 ) 
+			$extraField='';
+		}
+		if ( $limit > 0 ) 
 			$limitCond="LIMIT ".(int)$start.", ".(int)$limit;
-		else
+		else 
 			$limitCond="";
 		
-		$query=$this->con->prepare("SELECT `ChannelID` , `ProgramlID` , `programstarttime` 
+		
+		$query=$this->con->prepare("SELECT `ChannelID` , `ProgramlID` , `programstarttime` $extraField
 						FROM `RealtimeViews`
 						WHERE `UserID` = :UID $field
 						ORDER by `programstarttime` DESC
@@ -287,11 +286,21 @@ class dbConnections{
 			$res=array();
 			foreach( $result as $row ) {
 				$count++;
-				array_push($res, array(
-					"Channel"=>$this->lookupNames("Channel",$row["ChannelID"]),
-					"Time"=>$row["programstarttime"],
-					"Program"=>$this->lookupNames("Program",$row["ProgramlID"])
-				));
+				if ( $extraField == "" ) {
+					array_push($res, array(
+						"Channel"=>$this->lookupNames("Channel",$row["ChannelID"]),
+						"Time"=>$row["programstarttime"],
+						"Program"=>$this->lookupNames("Program",$row["ProgramlID"])
+					));
+				} else {
+					array_push($res, array(
+						"Channel"=>$this->lookupNames("Channel",$row["ChannelID"]),
+						"Time"=>$row["programstarttime"],
+						"Program"=>$this->lookupNames("Program",$row["ProgramlID"]),
+						"Status"=>$row["Status"],
+						"Favorite"=>$row["Favorite"]
+					));
+				}
 				//print_r($row);
 			}
 			#echo "count=".$count;
