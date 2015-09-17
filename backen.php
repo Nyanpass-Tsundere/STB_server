@@ -37,6 +37,8 @@ function getStatus($type,$data_field,$con) {
 		$Target="Channel";
 	else if ( $type == "Program" ) 
 		$Target="Program";
+	else if ( $type == "AD" )
+		$Target="AD";
 	
 	$TargetID=$con->lookupIDs("$Target",$data_field[$Target]);
 	
@@ -69,8 +71,8 @@ function getStatus($type,$data_field,$con) {
 	);
 	sentJSON(1,"資料取得成功",$return_data);
 }
-function getMyPrograms($con,$UID,$Status,$Fav,$Limit,$Start) {
-	$resArray=$con->myPrograms($UID,$Status,$Fav,$Limit,$Start);
+function getMyPrograms($con,$UID,$TYPE,$Status,$Fav,$Limit,$Start) {
+	$resArray=$con->myPrograms($UID,$TYPE,$Status,$Fav,$Limit,$Start);
 	
 	if ( $resArray["Status"] < 0 ) {
 		show_error($resArray["Status"],$resArray["Content"]);	
@@ -132,6 +134,26 @@ if ( $con->status() ) {
 				$dataForm["UID"],$ChannelID,$ProgramID,$dataForm["Time"],$dataForm["Status"]);
 			sentResault($res);
 			break;
+		
+		case "/API/SENTADSTATUS":
+		case "/API/SENTADSTATUS/":
+			$ChannelID=$con->lookupIDs("Channel",$dataForm["Channel"]);
+			$ADID=$con->lookupIDs("AD",$dataForm["AD"]);
+			
+			$res=$con->sent("ADStatus",
+				$dataForm["UID"],$ChannelID,$ADID,$dataForm["Time"],$dataForm["Status"]);
+			sentResault($res);
+			break;
+		case "/API/SENTADFAVORITE":
+		case "/API/SENTADFAVORITE/":
+			$ChannelID=$con->lookupIDs("Channel",$dataForm["Channel"]);
+			$ADID=$con->lookupIDs("AD",$dataForm["AD"]);
+			
+			$res=$con->sent("ADFavorite",
+				$dataForm["UID"],$ChannelID,$ADID,$dataForm["Time"],$dataForm["Status"]);
+			sentResault($res);
+			break;
+		
 		case "/API/GETCHANNELSTATUS":
 		case "/API/GETCHANNELSTATUS/":
 			getStatus("Channel",$dataForm,$con);
@@ -140,16 +162,33 @@ if ( $con->status() ) {
 		case "/API/GETPROGRAMSTATUS/":
 			getStatus("Program",$dataForm,$con);
 			break;
+		case "/API/GETADSTATUS":
+		case "/API/GETADSTATUS/":
+			getStatus("AD",$dataForm,$con);
+			break;
+		
 		case "/API/GETMYPROGRAMS":
 		case "/API/GETMYPROGRAMS/":
-			getMyPrograms($con,$dataForm["UID"],$dataForm["Status"],null,
+			getMyPrograms($con,$dataForm["UID"],"Program",$dataForm["Status"],null,
 				$dataForm["Amount"],$dataForm["Skips"]);
 			break;
 		case "/API/GETMYFAVORITE":
 		case "/API/GETMYFAVORITE/":
-			getMyPrograms($con,$dataForm["UID"],1,true,
+			getMyPrograms($con,$dataForm["UID"],"Program",1,true,
 				$dataForm["Amount"],$dataForm["Skips"]);
 			break;
+		
+		case "/API/GETMYAD":
+		case "/API/GETMYAD/":
+			getMyPrograms($con,$dataForm["UID"],"AD",$dataForm["Status"],null,
+				$dataForm["Amount"],$dataForm["Skips"]);
+			break;
+		case "/API/GETMYADFAVORITE":
+		case "/API/GETMYADFAVORITE/":
+			getMyPrograms($con,$dataForm["UID"],"AD",1,true,
+				$dataForm["Amount"],$dataForm["Skips"]);
+			break;
+		
 		case "/API/GETCHANNELRANK":
 		case "/API/GETCHANNELRANK/":
 			getRanking($con,"Channel",$dataForm["Status"],$dataForm["Range"],
@@ -160,6 +199,13 @@ if ( $con->status() ) {
 			getRanking($con,"Program",$dataForm["Status"],$dataForm["Range"],
 				$dataForm["Amount"],$dataForm["Skips"]);
 			break;
+		case "/API/GETADRANK":
+		case "/API/GETADRANK/":
+			getRanking($con,"AD",$dataForm["Status"],$dataForm["Range"],
+				$dataForm["Amount"],$dataForm["Skips"]);
+			break;
+		
+		
 		default:
 			show_error(-7,"URI=".$_SERVER["REQUEST_URI"]."\nAPI=".$API);
 			break;

@@ -53,6 +53,11 @@ class dbConnections{
 				$FIELD_L="ProgramName";
 				$TABLE="ProgramName";
 				break;
+			case "AD":
+				$FIELD_R="ADID";
+				$FIELD_L="ADName";
+				$TABLE="AdsName";
+				break;
 		}
 		$query=$this->con->prepare("SELECT `$FIELD_R` 
 				FROM `$TABLE`
@@ -83,6 +88,11 @@ class dbConnections{
 				$FIELD_R="ProgramName";
 				$TABLE="ProgramName";
 				break;
+			case "AD":
+				$FIELD_L="ADID";
+				$FIELD_R="ADName";
+				$TABLE="AdsName";
+				break;
 		}
 		$query=$this->con->prepare("SELECT `$FIELD_R` 
 				FROM `$TABLE`
@@ -98,17 +108,33 @@ class dbConnections{
 	
 	function sent($TYPE,$UID,$CHANNEL,$PROGRAM,$TIME,$SFIELD) {
 		if ( $TYPE == "Status" ) {
+			$UPDATE_TABLE="RealtimeViews";
 			$UPDATE_FILED="Status";
+			$UPDATE_ADPG_F="ProgramlID";
+			$UPDATE_ADPG_T="programstarttime";
 		}else if ( $TYPE == "Favorite" ) {
+			$UPDATE_TABLE="RealtimeViews";
 			$UPDATE_FILED="Favorite";
+			$UPDATE_ADPG_F="ProgramlID";
+			$UPDATE_ADPG_T="programstarttime";
+		}else if ( $TYPE == "ADStatus" ) {
+			$UPDATE_TABLE="RealtimeViewADs";
+			$UPDATE_FILED="Status";
+			$UPDATE_ADPG_F="ADID";
+			$UPDATE_ADPG_T="ADTime";
+		}else if ( $TYPE == "ADFavorite" ) {
+			$UPDATE_TABLE="RealtimeViewADs";
+			$UPDATE_FILED="Favorite";
+			$UPDATE_ADPG_F="ADID";
+			$UPDATE_ADPG_T="ADTime";
 		}else {
 			return -15;
 		}
 		
 		if ( $CHANNEL != null and $PROGRAM != null and $TIME !=null ) {
 		
-			$query=$this->con->prepare("INSERT INTO `RealtimeViews`
-				       (`UserID`, `ProgramlID`, `programstarttime`, `ChannelID`, `$UPDATE_FILED`) 
+			$query=$this->con->prepare("INSERT INTO `$UPDATE_TABLE`
+				       (`UserID`, `$UPDATE_ADPG_F`, `$UPDATE_ADPG_T`, `ChannelID`, `$UPDATE_FILED`) 
 				VALUES (:UID, :PROGRAM, :TIME, :CHANNEL, :STATUS)");
 			$query->bindParam(':UID',$UID,PDO::PARAM_INT);
 			$query->bindParam(':PROGRAM',$PROGRAM,PDO::PARAM_INT);
@@ -131,10 +157,10 @@ class dbConnections{
 					case 100:
 						$SFIELD=0;
 					default:
-						$update=$this->con->prepare("UPDATE `RealtimeViews` SET `$UPDATE_FILED` = :STATUS 
+						$update=$this->con->prepare("UPDATE `$UPDATE_TABLE` SET `$UPDATE_FILED` = :STATUS 
 							WHERE `RealtimeViews`.`UserID` = :UID
-							AND `RealtimeViews`.`ProgramlID` = :PROGRAM
-							AND `RealtimeViews`.`programstarttime` = :TIME; ");
+							AND `RealtimeViews`.`$UPDATE_ADPG_F` = :PROGRAM
+							AND `RealtimeViews`.`$UPDATE_ADPG_T` = :TIME; ");
 						$update->bindParam(':UID',$UID,PDO::PARAM_INT);
 						$update->bindParam(':PROGRAM',$PROGRAM,PDO::PARAM_INT);
 						$update->bindParam(':STATUS',$SFIELD,PDO::PARAM_INT);
@@ -200,9 +226,17 @@ class dbConnections{
 	
 	function statics($type,$target,$status,$seq,$noDup) {
 		if ( $type == "Program" ) {
+			$target_table="RealtimeViews";
 			$target_field="ProgramlID";
+			$target_time="programstarttime";
 		} else if ( $type == "Channel") {
+			$target_table="RealtimeViews";
 			$target_field="ChannelID";
+			$target_time="programstarttime";
+		} else if ( $type == "AD") {
+			$target_table="RealtimeViewADs";
+			$target_field="ADID";
+			$target_time="ADTime";
 		}
 		
 		if ( $status != "none" ) 
@@ -230,9 +264,9 @@ class dbConnections{
 		#echo "E_TIME=$E_TIME\n";
 		
 		$query=$this->con->prepare("SELECT COUNT( $COND_DUP `UserID` ) as COUNTING
-			FROM `RealtimeViews` 
+			FROM `$target_table` 
 			WHERE `$target_field` = :TARGET $target_status AND
-				`programstarttime` BETWEEN :START_TIME AND :ENDING_TIME ");
+				`$target_time` BETWEEN :START_TIME AND :ENDING_TIME ");
 		
 		$query->bindParam(':TARGET',$target,PDO::PARAM_INT);
 		if ( $status != "none" ) 
@@ -249,28 +283,48 @@ class dbConnections{
 		return $result["0"]["COUNTING"];
 	}
 
-	function myPrograms($UID,$status,$favorite,$limit,$start) {
-		if ( $status == "null" ) {
-			$field='';
-			$extraField=' , `Status` , `Favorite`';
+	function myPrograms($UID,$TYPE,$status,$favorite,$limit,$start) {
+		if ( $TYPE=="Program" ) {
+			$table='`RealtimeViews`';
+			$field_TIME='`programstarttime`';
+			if ( $status == "null" ) {
+				$field='`ChannelID` , `ProgramlID` , `programstarttime` , `Status` , `Favorite`';
+				$w_field='';
+			}
+			else if ( $favorite === true ) {
+				$field='`ChannelID` , `ProgramlID` , `programstarttime`';
+				$w_field='AND `Favorite` = :status';
+			}
+			else {
+				$field='`ChannelID` , `ProgramlID` , `programstarttime`';
+				$w_field='AND `Status` = :status';
+			}
+		} else if ( $TYPE=="AD" ) {
+			$table='`RealtimeViewADs`';
+			$field_TIME='`ADTime`';
+			if ( $status == "null" ) {
+				$field='`ChannelID` , `ADID` , `ADTime` , `Status` , `Favorite`';
+				$w_field='';
+			}
+			else if ( $favorite === true ) {
+				$field='`ChannelID` , `ADID` , `ADTime`';
+				$w_field='AND `Favorite` = :status';
+			}
+			else {
+				$field='`ChannelID` , `ADID` , `ADTime`';
+				$w_field='AND `Status` = :status';
+			}
 		}
-		else if ( $favorite === true ) {
-			$field='AND `Favorite` = :status';
-			$extraField='';
-		}
-		else {
-			$field='AND `Status` = :status';
-			$extraField='';
-		}
+		
 		if ( $limit > 0 ) 
 			$limitCond="LIMIT ".(int)$start.", ".(int)$limit;
 		else 
 			$limitCond="";
 		
-		$query=$this->con->prepare("SELECT `ChannelID` , `ProgramlID` , `programstarttime` $extraField
-						FROM `RealtimeViews`
-						WHERE `UserID` = :UID $field
-						ORDER by `programstarttime` DESC
+		$query=$this->con->prepare("SELECT $field
+						FROM $table
+						WHERE `UserID` = :UID $w_field
+						ORDER by $field_TIME DESC
 						$limitCond");
 						//LIMIT :limit , :start");
 		$query->bindParam(':UID',$UID,PDO::PARAM_INT);
@@ -315,29 +369,37 @@ class dbConnections{
 	
 	function getRanking($type,$status,$range,$limit,$start) {
 		if ( $type == "Channel" ) {
-			$field="";
+			$table="`RealtimeViews`";
+			$field="`ChannelID` ";
+			$field_TIME="`programstarttime`";
 		}
 		else if ( $type == "Program" ) {
-			$field=", `ProgramlID` ";
-			//$field=", `ProgramlID` , `programstarttime`";
+			$table="`RealtimeViews`";
+			$field="`ChannelID` , `ProgramlID` ";
+			$field_TIME="`programstarttime`";
+		}
+		else if ( $type == "AD" ) {
+			$table="`RealtimeViewADs`";
+			$field="`ADID`";
+			$field_TIME="`ADTime`";
 		}
 		
 		if ( $range == "Year" ) {
 			$E_TIME=$this->formatTime($this->oldTime(0,"NOW"),"month");
 			$S_TIME=$this->formatTime($this->oldTime(1,"year"),"month");
-			$cond="Where `programstarttime` BETWEEN \"$S_TIME\" AND \"$E_TIME\" ";
+			$cond="Where $field_TIME BETWEEN \"$S_TIME\" AND \"$E_TIME\" ";
 		} else if ( $range == "Month" ) {
 			$E_TIME=$this->formatTime($this->oldTime(0,"NOW"),"day");
 			$S_TIME=$this->formatTime($this->oldTime(1,"month"),"day");
-			$cond="Where `programstarttime` BETWEEN \"$S_TIME\" AND \"$E_TIME\" ";
+			$cond="Where $field_TIME BETWEEN \"$S_TIME\" AND \"$E_TIME\" ";
 		} else if ( $range == "Week" ) {
 			$S_TIME=$this->formatTime($this->oldTime(1,"week"),"hour");
 			$E_TIME=$this->formatTime($this->oldTime(0,"NOW"),"hour");
-			$cond="Where `programstarttime` BETWEEN \"$S_TIME\" AND \"$E_TIME\" ";
+			$cond="Where $field_TIME BETWEEN \"$S_TIME\" AND \"$E_TIME\" ";
 		} else if ( $range == "Day" ) {
 			$E_TIME=$this->formatTime($this->oldTime(0,"NOW"),"second");
 			$S_TIME=$this->formatTime($this->oldTime(1,"day"),"second");
-			$cond="Where `programstarttime` BETWEEN \"$S_TIME\" AND \"$E_TIME\" ";
+			$cond="Where $field_TIME BETWEEN \"$S_TIME\" AND \"$E_TIME\" ";
 		} else {
 			$cond="Where ";
 		}
@@ -354,10 +416,10 @@ class dbConnections{
 		else 
 			$limitCond="";
 		
-		$query=$this->con->prepare("SELECT `ChannelID` $field , count(UserID) as Counting
-						FROM `RealtimeViews`
+		$query=$this->con->prepare("SELECT $field , count(UserID) as Counting
+						FROM $table
 						$cond
-						GROUP BY `ChannelID` $field
+						GROUP BY $field
 						ORDER BY `Counting` DESC
 						$limitCond");
 		
@@ -380,6 +442,11 @@ class dbConnections{
 						"Channel"=>$this->lookupNames("Channel",$row["ChannelID"]),
 						//"Time"=>$row["programstarttime"],
 						"Program"=>$this->lookupNames("Program",$row["ProgramlID"]),
+						"Counting"=>$row["Counting"]
+					));
+				} else if ( $type == "AD" ) {
+					array_push($res, array(
+						"Channel"=>$this->lookupNames("AD",$row["ADID"]),
 						"Counting"=>$row["Counting"]
 					));
 				}
