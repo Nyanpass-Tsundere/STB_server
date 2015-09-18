@@ -339,22 +339,41 @@ class dbConnections{
 			$res=array();
 			foreach( $result as $row ) {
 				$count++;
-				if ( $extraField == "" ) {
-					array_push($res, array(
-						"Channel"=>$this->lookupNames("Channel",$row["ChannelID"]),
-						"Time"=>$row["programstarttime"],
-						"Program"=>$this->lookupNames("Program",$row["ProgramlID"])
-					));
-				} else {
-					array_push($res, array(
-						"Channel"=>$this->lookupNames("Channel",$row["ChannelID"]),
-						"Time"=>$row["programstarttime"],
-						"Program"=>$this->lookupNames("Program",$row["ProgramlID"]),
-						"Status"=>$row["Status"],
-						"Favorite"=>$row["Favorite"]
-					));
+				if ( $TYPE=="Program" ) {
+					if ( $status != "null" ) {
+						array_push($res, array(
+							"Channel"=>$this->lookupNames("Channel",$row["ChannelID"]),
+							"Time"=>$row["programstarttime"],
+							"Program"=>$this->lookupNames("Program",$row["ProgramlID"])
+						));
+					} else {
+						array_push($res, array(
+							"Channel"=>$this->lookupNames("Channel",$row["ChannelID"]),
+							"Time"=>$row["programstarttime"],
+							"Program"=>$this->lookupNames("Program",$row["ProgramlID"]),
+							"Status"=>$row["Status"],
+							"Favorite"=>$row["Favorite"]
+						));
+					}
+					//print_r($row);
+				} else if ( $TYPE=="AD" ) {
+					if ( $status != "null" ) {
+						array_push($res, array(
+							"Channel"=>$this->lookupNames("Channel",$row["ChannelID"]),
+							"Time"=>$row["ADTime"],
+							"AD"=>$this->lookupNames("AD",$row["ADID"])
+						));
+					} else {
+						array_push($res, array(
+							"Channel"=>$this->lookupNames("Channel",$row["ChannelID"]),
+							"Time"=>$row["ADTime"],
+							"AD"=>$this->lookupNames("AD",$row["ADID"]),
+							"Status"=>$row["Status"],
+							"Favorite"=>$row["Favorite"]
+						));
+					}
+					//print_r($row);
 				}
-				//print_r($row);
 			}
 			#echo "count=".$count;
 			//print_r($result);
