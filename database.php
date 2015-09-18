@@ -158,9 +158,9 @@ class dbConnections{
 						$SFIELD=0;
 					default:
 						$update=$this->con->prepare("UPDATE `$UPDATE_TABLE` SET `$UPDATE_FILED` = :STATUS 
-							WHERE `RealtimeViews`.`UserID` = :UID
-							AND `RealtimeViews`.`$UPDATE_ADPG_F` = :PROGRAM
-							AND `RealtimeViews`.`$UPDATE_ADPG_T` = :TIME; ");
+							WHERE `$UPDATE_TABLE`.`UserID` = :UID
+							AND `$UPDATE_TABLE`.`$UPDATE_ADPG_F` = :PROGRAM
+							AND `$UPDATE_TABLE`.`$UPDATE_ADPG_T` = :TIME; ");
 						$update->bindParam(':UID',$UID,PDO::PARAM_INT);
 						$update->bindParam(':PROGRAM',$PROGRAM,PDO::PARAM_INT);
 						$update->bindParam(':STATUS',$SFIELD,PDO::PARAM_INT);
